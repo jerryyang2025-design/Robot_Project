@@ -13,7 +13,7 @@ void ERCMain()
     int x, y;
 
     //Initialize the screen
-    LCD.Clear(BLACK);
+    LCD.Clear(BLACK); //clear screen
     LCD.SetFontColor(WHITE);
 
     LCD.WriteLine("Analog Optosensor Testing");
