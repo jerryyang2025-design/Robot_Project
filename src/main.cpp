@@ -10,7 +10,7 @@ AnalogInputPin left_opto(FEHIO::Pin4);
 
 void ERCMain()
 {
-    int x, y; //for touch screen
+    int x, y;
 
     //Initialize the screen
     LCD.Clear(BLACK);
