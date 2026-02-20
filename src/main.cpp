@@ -42,6 +42,7 @@ void ERCMain()
     while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
     while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
     // Write the value returned by the optosensor to the screen
+    
     // <ADD CODE HERE>
 
     // Repeat process for remaining optosensors, and repeat all three for the curved line values
