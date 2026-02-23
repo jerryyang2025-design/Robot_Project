@@ -1,7 +1,7 @@
 #pragma once
 
-#include <FEHLCD.h>
 #include <FEHIO.h>
+#include <FEHMotor.h>
 #include <FEHSD.h>
 #include <FEH.h>
 
@@ -10,8 +10,8 @@
 
 class driveTrain {
     private:
-        // FEHMotor left(FEHMotor::Motor1, 9);
-        // FEHMotor right(FEHMotor::Motor0, 9);
-    public:
 
+    public:
+        void move_forward(int percent, int inches);
+        void turn(int percent, int degrees, int direction); // positive: turn right, negative: turn left
 };
