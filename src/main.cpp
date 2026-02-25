@@ -6,9 +6,7 @@
 
 void ERCMain()
 {
-    driveTrain cart;
-    int motor_percent = 25; //Input power level here
-
+    Robot robot;
     int x, y; //for touch screen
 
     //Initialize the screen
@@ -20,10 +18,10 @@ void ERCMain()
     while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
     while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
 
-    cart.move_forward(motor_percent, 14);
-    cart.turn(motor_percent, 90, -1);
-    cart.move_forward(motor_percent, 10);
-    cart.turn(motor_percent, 90, 1);
-    cart.move_forward(motor_percent, 4);
-
+    robot.move_forward(14);
+    robot.turn(90, -1);
+    robot.move_forward(10);
+    robot.turn(90, 1);
+    robot.move_forward(4);
+    // robot.navigate();
 }
