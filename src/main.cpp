@@ -17,11 +17,17 @@ void ERCMain()
     LCD.WriteLine("Touch the screen");
     while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
     while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
+    LCD.WriteLine("3");
+    Sleep(1000);
+    LCD.WriteLine("2");
+    Sleep(1000);
+    LCD.WriteLine("1");
+    Sleep(1000);
 
     robot.move_forward(14);
     robot.turn(90, -1);
     robot.move_forward(10);
     robot.turn(90, 1);
     robot.move_forward(4);
-    // robot.navigate();
+    // navigate();
 }

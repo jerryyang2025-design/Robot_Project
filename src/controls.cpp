@@ -14,6 +14,7 @@ AnalogInputPin right_opto(FEHIO::Pin1);
 FEHServo base(FEHServo::Servo0);
 FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
+FEHServo servos[3] = {base, joint1, joint2};
 
 void Robot::move_forward(int inches, int percent, int early) {
     //Reset encoder counts
@@ -65,6 +66,18 @@ void Robot::follow(FEHMotor motor1, FEHMotor motor2) {
     motor2.SetPercent(SPEED * 1.4); // why did I have 4 lines here again? should probably test and fix it...
 }
 
+bool Robot::detect(int type) {
+    bool detected = false;
+    if (type != 0) {
+        if (type == 1) {
+            // TODO: finish this
+        } else if ( type == 2) {
+            
+        }
+    }
+    return detected;
+}
+
 void Robot::controlledFollow(int inches, int direction, int early) {
     float counts = inches * 40.5f;
     while (!detect(early) && (left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
@@ -92,8 +105,6 @@ void Robot::controlledFollow(int inches, int direction, int early) {
 }
 
 void Robot::rotate(int joint, int angle) {
-    FEHServo servos[] = {base, joint1, joint2};
-    int angles[] = {baseAngle, joint1Angle, joint2Angle};
     int increment = (angle - angles[joint]) / rotateIncrement;
     for (int i = 0; i < rotateIncrement; i++) {
         servos[joint].SetDegree(angles[joint] + increment * (i + 1));

@@ -10,10 +10,11 @@
 
 class Robot {
     private:
-        const float left_opto_threshold = 3;
+        const float left_opto_threshold = 3; // may need to change
         const float right_opto_threshold = 2.5;
         // servo min/max, light sensor thresholds, others
-        int baseAngle, joint1Angle, joint2Angle;
+        int baseAngle = 0, joint1Angle = 0, joint2Angle = 0;
+        int angles[3] = {baseAngle, joint1Angle, joint2Angle};
 
         int rotateSpeed = 10, rotateIncrement = 10; // rotateSpeed: pause time between increments in milliseconds
 
@@ -25,7 +26,7 @@ class Robot {
         void controlledFollow(int inches, int direction = 0, int early = 0); // -1 = left bias, 1 = right bias; 0 = no early exit, 1 = microswitches, 2 = light
         void rotate(int jointIndex, int angle); // base = 0, joint1 = 1, joint2 = 2
         void defaultArm();
-        void calibrate();
+        void calibrate(); // set servo min/max, others?
         int lightColor(); // 0 = no light, -1 = blue, 1 = red
 };
 
