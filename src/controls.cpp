@@ -16,7 +16,7 @@ FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
-void Robot::move_forward(int inches, int percent, int early) {
+void Robot::move_forward(int8_t inches, int8_t percent, int8_t early) {
     //Reset encoder counts
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -36,7 +36,7 @@ void Robot::move_forward(int inches, int percent, int early) {
     left_motor.Stop();
 }
 
-void Robot::turn(int degrees, int direction, int percent) { // positive: turn right, negative: turn left
+void Robot::turn(int16_t degrees, int8_t direction, int8_t percent) { // positive: turn right, negative: turn left
     //Reset encoder counts
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -66,7 +66,7 @@ void Robot::follow(FEHMotor motor1, FEHMotor motor2) {
     motor2.SetPercent(SPEED * 1.4); // why did I have 4 lines here again? should probably test and fix it...
 }
 
-bool Robot::detect(int type) {
+bool Robot::detect(int8_t type) {
     bool detected = false;
     if (type != 0) {
         if (type == 1) {
@@ -78,7 +78,7 @@ bool Robot::detect(int type) {
     return detected;
 }
 
-void Robot::controlledFollow(int inches, int direction, int early) {
+void Robot::controlledFollow(int8_t inches, int8_t direction, int8_t early) {
     float counts = inches * 40.5f;
     while (!detect(early) && (left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
         bool left_detected = left_opto.Value() > left_opto_threshold;
@@ -104,7 +104,7 @@ void Robot::controlledFollow(int inches, int direction, int early) {
     }
 }
 
-void Robot::rotate(int joint, int angle) {
+void Robot::rotate(int8_t joint, int16_t angle) {
     int increment = (angle - angles[joint]) / rotateIncrement;
     for (int i = 0; i < rotateIncrement; i++) {
         servos[joint].SetDegree(angles[joint] + increment * (i + 1));
