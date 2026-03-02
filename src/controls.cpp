@@ -67,13 +67,16 @@ void Robot::follow(FEHMotor motor1, FEHMotor motor2) {
 }
 
 bool Robot::detect(int8_t type) {
+    if (type == 0) {
+        return false;   
+    }
     bool detected = false;
-    if (type != 0) {
-        if (type == 1) {
-            // TODO: finish this
-        } else if ( type == 2) {
-            
-        }
+    if (type == 1) {
+        // TODO: finish this
+    } else if ( type == 2) {
+        
+    } else if ( type == 3) {
+        
     }
     return detected;
 }

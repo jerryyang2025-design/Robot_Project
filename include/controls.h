@@ -18,12 +18,12 @@ class Robot {
 
         int8_t rotateSpeed = 10, rotateIncrement = 10; // rotateSpeed: pause time between increments in milliseconds
 
-        bool detect(int8_t type); // 0 = no detection, 1 = microswitches, 2 = light
+        bool detect(int8_t type); // 0 = no detection, 1 = microswitches, 2 = light, 3 = line
         void follow(FEHMotor motor1, FEHMotor motor2);
     public:
-        void move_forward(int8_t inches, int8_t percent = SPEED, int8_t early = 0); // 0 = no early exit, 1 = microswitches, 2 = light
+        void move_forward(int8_t inches, int8_t percent = SPEED, int8_t early = 0); // refer to detect
         void turn(int16_t degrees, int8_t direction, int8_t percent = SPEED); // positive: turn right, negative: turn left
-        void controlledFollow(int8_t inches, int8_t direction = 0, int8_t early = 0); // -1 = left bias, 1 = right bias; 0 = no early exit, 1 = microswitches, 2 = light
+        void controlledFollow(int8_t inches, int8_t direction = 0, int8_t early = 0); // -1 = left bias, 1 = right bias; refer to detect
         void rotate(int8_t jointIndex, int16_t angle); // base = 0, joint1 = 1, joint2 = 2
         void defaultArm();
         void calibrate(); // set servo min/max, others?
