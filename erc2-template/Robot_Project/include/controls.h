@@ -29,7 +29,8 @@ class Robot {
         void calibrate(); // set servo min/max, others?
         int8_t lightColor(); // 0 = no light, -1 = blue, 1 = red
 
-        void pause(); // for testing only
+        void stop(); // for testing only
+        void tempMove(float time, int8_t dir);
 };
 
 // will probably put this in another file

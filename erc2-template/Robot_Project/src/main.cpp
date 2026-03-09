@@ -7,10 +7,12 @@
 void ERCMain()
 {
     Robot robot;
-    robot.pause();
+    robot.stop();
 
-    robot.controlledFollow(10, 1);
-    robot.turn(90, 1);
-    robot.pause();
+    robot.tempMove(10.0f, 1);
+    robot.stop();
+    robot.tempMove(10.0f, 1);
+    Sleep(100);
+    robot.tempMove(10.0f, -1);
     // navigate();
 }

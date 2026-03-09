@@ -6,7 +6,7 @@ FEHMotor right_motor(FEHMotor::Motor0, 9);
 
 // sensors
 DigitalEncoder right_encoder(FEHIO::Pin8);
-DigitalEncoder left_encoder(FEHIO::Pin9);
+DigitalEncoder left_encoder(FEHIO::Pin12);
 AnalogInputPin left_opto(FEHIO::Pin0);
 AnalogInputPin right_opto(FEHIO::Pin1);
 
@@ -41,7 +41,7 @@ void Robot::turn(int16_t degrees, int8_t direction, int8_t percent) { // positiv
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
-    const float radius = 3.5; // inches
+    const float radius = 3.35; // inches
     const float pi = 3.141592653589793238462643383;
 
     float counts = radius * 40.5f * degrees * pi / 180.0f;
@@ -92,7 +92,7 @@ void Robot::controlledFollow(int8_t inches, int8_t direction, int8_t early) {
             continue;
         }
         if (direction < 0 && both) {
-            follow(right_motor, left_motor);
+            turn(10, direction);
             continue;
         }
 
@@ -124,7 +124,7 @@ void Robot::defaultArm() {
     }
 }
 
-void Robot::pause() {
+void Robot::stop() {
     int x, y;
     LCD.Clear(BLACK);
     LCD.SetFontColor(WHITE);
@@ -138,4 +138,17 @@ void Robot::pause() {
     Sleep(1000);
     LCD.WriteLine("1");
     Sleep(1000);
+}
+
+void Robot::tempMove(float time, int8_t dir) {
+    if (dir > 0) {
+        right_motor.SetPercent(-SPEED);
+        left_motor.SetPercent(SPEED);
+    } else {
+        right_motor.SetPercent(SPEED);
+        left_motor.SetPercent(-SPEED);
+    }
+    Sleep(time);
+    right_motor.Stop();
+    left_motor.Stop();
 }
