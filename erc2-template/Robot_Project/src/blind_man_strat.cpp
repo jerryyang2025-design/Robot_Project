@@ -1,7 +1,7 @@
 #include <blind_man_strat.h>
 
 // motors
-FEHMotor left_motor(FEHMotor::Motor1, 9);
+FEHMotor left_motor(FEHMotor::Motor2, 9);
 FEHMotor right_motor(FEHMotor::Motor0, 9);
 
 // sensors
@@ -20,6 +20,7 @@ bool Robot::move_forward(float inches, int8_t early) {
     left_encoder.ResetCounts();
 
     int8_t percent = SPEED;
+    float adjustment = 1.03;
 
     float counts = inches * 40.5f;
 
@@ -28,7 +29,7 @@ bool Robot::move_forward(float inches, int8_t early) {
         percent = -SPEED;
     }
 
-    right_motor.SetPercent(percent);
+    right_motor.SetPercent(adjustment * percent);
     left_motor.SetPercent(percent);
 
     bool stopped = false;
@@ -63,6 +64,7 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     left_encoder.ResetCounts();
 
     int8_t percent = SPEED;
+    float adjustment = 1.05;
 
     const float radius = 3.35; // inches
     const float pi = 3.141592653589793238462643383;
@@ -74,7 +76,7 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
 
     bool stopped = false;
 
-    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts && !detect(early));
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts * adjustment && !detect(early));
     if (detect(early)) {
         stopped = true;
     }
@@ -126,12 +128,17 @@ void Robot::stop() {
 void Robot::hug(int8_t side) { // 0 = front, 1 = right side, -1 = left side
     turn(90, -side);
     Sleep(delay);
-    move_forward(-8, 2);
+    move_forward(-12, 2);
+    Sleep(delay);
+    move_forward(1);
     Sleep(delay);
     turn(90, side);
 }
 
 void Robot::sweep(float inches, int8_t angle, float gap) {
+    if (detect(1)) {
+        return;
+    }
     turn(angle / 2, 1, 1);
     for (int i = 0; i < inches / gap; i++) {
         move_forward(gap, 1);
@@ -157,8 +164,17 @@ void hugTheWall(Robot robot, int8_t inches, int8_t side, int8_t checks, int8_t e
 }
 
 void buttons(Robot robot) {
-    int8_t mode = robot.lightColor();
     int8_t delay = 100;
+    robot.move_forward(0.5);
+    Sleep(1000);
+    int8_t mode = robot.lightColor();
+
+    LCD.WriteLine("Light Color:");
+    if (mode == -1) {
+        LCD.WriteLine("Blue");
+    } else if (mode == 1) {
+        LCD.WriteLine("Red");
+    }
 
     robot.turn(90, mode);
     Sleep(delay);

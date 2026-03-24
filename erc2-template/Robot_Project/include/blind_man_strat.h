@@ -14,7 +14,7 @@ class Robot {
         const float right_opto_threshold = 2.5;
         // servo min/max, light sensor thresholds, others
         const float blue_threshold = 2;
-        const float red_threshold = 0.5;
+        const float red_threshold = 0.85;
         const int8_t check_time = 50; // miliseconds
         const int8_t delay = 100;
 
