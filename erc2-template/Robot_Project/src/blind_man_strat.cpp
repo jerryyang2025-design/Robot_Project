@@ -15,18 +15,18 @@ FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
-bool Robot::move_forward(float inches, int8_t early) {
+bool Robot::move_forward(float inches, int8_t early, int8_t speed) {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
-    int8_t percent = SPEED;
+    int8_t percent = speed;
     float adjustment = 1.03;
 
     float counts = inches * 40.5f;
 
     if (counts < 0) {
         counts *= -1;
-        percent = -SPEED;
+        percent = -speed;
     }
 
     right_motor.SetPercent(adjustment * percent);
@@ -149,31 +149,51 @@ void Robot::sweep(float inches, int8_t angle, float gap) {
     }
 }
 
-void hugTheWall(Robot robot, int8_t inches, int8_t side, int8_t checks, int8_t early) {
-    float interval = inches / (checks + 1.0f);
-    int8_t delay = 100;
+void compost(Robot robot) {
+    LCD.WriteLine("compost");
+    robot.stop();
+}
 
-    for (int i = 0; i < checks; i++) {
-        robot.move_forward(interval, early);
-        Sleep(delay);
-        robot.hug(side);
-        Sleep(delay);
-    }
+void lift(Robot robot) {
+    LCD.WriteLine("lift");
+    robot.stop();
+}
 
-    robot.move_forward(interval, early);
+void drop(Robot robot) {
+    LCD.WriteLine("drop");
+    robot.stop();
+}
+
+void levers(Robot robot) {
+    LCD.WriteLine("levers");
+    robot.stop();
 }
 
 void buttons(Robot robot) {
-    int8_t delay = 100;
-    robot.move_forward(0.5);
-    Sleep(1000);
-    int8_t mode = robot.lightColor();
+    robot.move_forward(-0.5);
+    Sleep(500);
 
-    LCD.WriteLine("Light Color:");
-    if (mode == -1) {
-        LCD.WriteLine("Blue");
-    } else if (mode == 1) {
-        LCD.WriteLine("Red");
+    int8_t mode = 0;
+    while (true) {
+        for (int i = 0; i < 15; i++) {
+            mode += robot.lightColor();
+            Sleep(delay / 5);
+        }
+
+        LCD.WriteLine("Light Color:");
+        if (mode < -5) {
+            LCD.WriteLine("Blue");
+            mode = -1;
+            break;
+        } else if (mode > 5) {
+            LCD.WriteLine("Red");
+            mode = 1;
+            break;
+        } else {
+            LCD.WriteLine("Inconclusive");
+            LCD.WriteLine("Trying Again...");
+            mode = 0;
+        }
     }
 
     robot.turn(90, mode);
@@ -191,4 +211,141 @@ void buttons(Robot robot) {
     robot.move_forward(3);
     Sleep(delay);
     robot.turn(90, -mode);
+}
+
+void window(Robot robot) {
+    LCD.WriteLine("window");
+    robot.stop();
+}
+
+void dance(Robot robot) {
+    for (int i = 0; i < 10; i++) {
+        robot.move_forward(1);
+        robot.move_forward(-1);
+        robot.move_forward(1);
+        robot.move_forward(-1);
+        robot.turn(60, 1);
+    }
+}
+
+void runCourse(Robot robot) { // god function hahahaha bad practice can't stop me
+    while (!robot.detect(1));
+    
+    // start button
+    robot.move_forward(5, 2);
+    Sleep(delay);
+    robot.turn(135, 1);
+    Sleep(delay);
+
+    // compost
+    robot.move_forward(5, 2);
+    Sleep(delay);
+    robot.hug(-1);
+    Sleep(delay);
+    robot.stop(); // checkpoint
+    robot.move_forward(20, 2);
+    Sleep(delay);
+    compost(robot);
+    Sleep(delay);
+
+    // lift bucket
+    robot.turn(90, 1);
+    Sleep(delay);
+    robot.move_forward(36, 2);
+    Sleep(delay);
+    robot.move_forward(-6);
+    Sleep(delay);
+    robot.turn(90, -1);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+    robot.move_forward(2, 2);
+    Sleep(delay);
+    lift(robot);
+    robot.move_forward(-4);
+    Sleep(delay);
+
+    // drop bucket
+    robot.turn(90, -1);
+    Sleep(delay);
+    robot.move_forward(5, 2);
+    Sleep(delay);
+    robot.turn(90, -1);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+    robot.move_forward(36, 2);
+    Sleep(delay);
+    robot.turn(90, -1);
+    Sleep(delay);
+    robot.move_forward(40, 2);
+    Sleep(delay);
+    robot.turn(90, -1);
+    Sleep(delay);
+    robot.move_forward(-9, 2);
+    Sleep(delay);
+    robot.move_forward(5, 2);
+    Sleep(delay);
+    robot.turn(90, 1);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+    robot.move_forward(16, 2);
+    Sleep(delay);
+    robot.turn(90, 1);
+    Sleep(delay);
+    drop(robot);
+    Sleep(delay);
+    robot.turn(90, -1);
+    Sleep(delay);
+
+    // levers
+    robot.move_forward(20, 2);
+    Sleep(delay);
+    robot.move_forward(-2, 2);
+    Sleep(delay);
+    robot.turn(90, -1);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+    robot.move_forward(10, 2);
+    Sleep(delay);
+    robot.turn(45, 1);
+    Sleep(delay);
+    levers(robot);
+    Sleep(delay);
+    robot.turn(135, -1);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+
+    // buttons
+    robot.move_forward(36, 2);
+    robot.stop(); // checkpoint
+    Sleep(delay);
+    robot.move_forward(-6, 2);
+    Sleep(delay);
+    robot.turn(90, 1);
+    Sleep(delay);
+    robot.stop(); // checkpoint
+    robot.move_forward(-5, 1);
+    Sleep(delay);
+    robot.stop(); // checkpoint
+    buttons(robot);
+    Sleep(delay);
+
+    // stop button
+    robot.move_forward(34, 2);
+    Sleep(delay);
+    robot.move_forward(0.6);
+    Sleep(delay);
+    robot.turn(90, 1);
+    Sleep(delay);
+    robot.move_forward(35.5, 2);
+    Sleep(delay);
+    robot.turn(45, -1);
+    Sleep(delay);
+    robot.move_forward(4, 2);
+    robot.stop(); // checkpoint
+    
+    // victory dance
+    Sleep(delay);
+    robot.move_forward(-4);
+    Sleep(delay);
+    dance(robot);
 }
