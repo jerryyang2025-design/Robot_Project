@@ -1,14 +1,12 @@
-// #pragma once
+#pragma once
 
-// #include <FEHIO.h>
-// #include <FEHMotor.h>
-// #include <FEHSD.h>
-// #include <FEH.h>
-// #include <utils.h>
-// #include <controls.h>
+#include <FEHIO.h>
+#include <FEHMotor.h>
+#include <FEHSD.h>
+#include <FEH.h>
+#include <utils.h>
+#include <robot.h>
 
-// void navigate(); // course navigation and task completion here
+void dance(Robot robot);
 
-// // functions for each task
-
-// void buttons(Robot robot);
+void runCourse(Robot robot);
