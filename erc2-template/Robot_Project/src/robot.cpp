@@ -15,7 +15,7 @@ FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
-uint8_t clampServo(int16_t value) {
+uint8_t clampServo(float value) { // single function, not worth using the utils file
     if (value > 180) {
         return 180;
     } else if (value < 0) {
@@ -25,13 +25,34 @@ uint8_t clampServo(int16_t value) {
     }
 }
 
-bool Robot::move_forward(float inches, int8_t early, int8_t speed) {
+void Robot::initialize() {
+    defaultArm();
+    // RCS.InitializeTouchMenu("0300G9LQG");
+    
+    int x, y;
+    LCD.Clear(BLACK);
+    LCD.SetFontColor(WHITE);
+    LCD.WriteLine("Paused");
+    LCD.WriteLine("Touch the screen to continue");
+    while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
+    while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
+    LCD.WriteLine("3");
+    Sleep(1000);
+    LCD.WriteLine("2");
+    Sleep(1000);
+    LCD.WriteLine("1");
+    Sleep(1000);
+    
+    while (!detect(1));
+}
+
+bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
     int8_t percent = speed;
     // float adjustment = 1.03;
-    float adjustment = 1.0f;
+    float adjustment = 1.0f; // to account for physical wheel misalignment
 
     float counts = inches * 40.5f;
 
@@ -52,6 +73,9 @@ bool Robot::move_forward(float inches, int8_t early, int8_t speed) {
             Sleep(check_time);
             if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
                 stopped = true;
+                if (!backUp) { // default false since slipping causes inconsistencies
+                    break;
+                }
                 if (inches < 0) {
                     move_forward(2);
                 } else if (inches > 0) {
@@ -121,19 +145,21 @@ int8_t Robot::lightColor() { // 0 = no light, -1 = blue, 1 = red
 }
 
 void Robot::stop() {
-    int x, y;
-    LCD.Clear(BLACK);
-    LCD.SetFontColor(WHITE);
-    LCD.WriteLine("Paused");
-    LCD.WriteLine("Touch the screen to continue");
-    while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
-    while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
-    LCD.WriteLine("3");
-    Sleep(1000);
-    LCD.WriteLine("2");
-    Sleep(1000);
-    LCD.WriteLine("1");
-    Sleep(1000);
+    if (debugMode) {
+        int x, y;
+        LCD.Clear(BLACK);
+        LCD.SetFontColor(WHITE);
+        LCD.WriteLine("Paused");
+        LCD.WriteLine("Touch the screen to continue");
+        while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
+        while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
+        LCD.WriteLine("3");
+        Sleep(1000);
+        LCD.WriteLine("2");
+        Sleep(1000);
+        LCD.WriteLine("1");
+        Sleep(1000);
+    }
 }
 
 void Robot::hug(int8_t side) { // 0 = front, 1 = right side, -1 = left side
@@ -170,6 +196,7 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
     } else if (joint == 2) {
         moveAngle = 100 - angle;
     }
+
     if (joint2 == 0) {
         moveAngle2 = angle2 + 90;
     } else if (joint2 == 1) {
@@ -181,13 +208,15 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
     if (!slow) {
         steps = 1;
     }
-    int increment = (moveAngle - angles[joint]) / steps;
-    int increment2 = moveAngle2;
+    float increment = 1.0f * (moveAngle - angles[joint]) / steps;
+
+    float increment2 = moveAngle2;
     if (joint2 != 4) {
-        increment2 = (moveAngle2 - angles[joint2]) / steps;
+        increment2 = 1.0f * (moveAngle2 - angles[joint2]) / steps;
     }
     for (int i = 0; i < steps; i++) {
         servos[joint].SetDegree(clampServo(angles[joint] + increment * (i + 1)));
+
         if (joint2 != 4) {
             servos[joint2].SetDegree(clampServo(angles[joint2] + increment2 * (i + 1)));
         }
@@ -209,4 +238,8 @@ void Robot::defaultArm() {
     angles[0] = 90;
     angles[1] = 180;
     angles[2] = 10;
+}
+
+int8_t Robot::lever() {
+    return 2 - RCS.GetLever();
 }

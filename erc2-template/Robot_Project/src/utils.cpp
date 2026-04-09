@@ -1,12 +1,16 @@
-#include <utils.h>
-#include <Arduino.h>
+/*
+    {RETIRED FILE}
+*/
 
-#define EPSILON 1e-5
+// #include <utils.h>
+// #include <Arduino.h>
 
-bool equals(float a, float b) {
-    return abs(a - b) < EPSILON;
-}
+// #define EPSILON 1e-5
 
-bool equals(const Position& a, const Position& b) {
-    return equals(a.x, b.x) && equals(a.y, b.y) && equals(a.z, b.z);
-}
+// bool equals(float a, float b) {
+//     return abs(a - b) < EPSILON;
+// }
+
+// bool equals(const Position& a, const Position& b) {
+//     return equals(a.x, b.x) && equals(a.y, b.y) && equals(a.z, b.z);
+// }

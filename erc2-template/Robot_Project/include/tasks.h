@@ -7,6 +7,4 @@
 #include <utils.h>
 #include <robot.h>
 
-void dance(Robot robot);
-
-void runCourse(Robot robot);
+void runCourse(Robot &robot);

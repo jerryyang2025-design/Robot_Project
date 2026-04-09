@@ -1,75 +1,159 @@
 #include <tasks.h>
 
-void compost(Robot robot) {
-    LCD.WriteLine("compost");
+void compost(Robot &robot) {
+    robot.rotate(2, -90);
+    Sleep(delay);
+    robot.rotate(0, -90, true, 1, -20);
+    Sleep(delay);
+    robot.rotate(2, 20);
+    Sleep(delay);
+    robot.move_forward(2, 2);
+    Sleep(delay);
+    robot.rotate(1, 20, true, 2, -20);
     robot.stop();
+    Sleep(delay);
+    robot.rotate(0, 90, true);
+    Sleep(delay);
+    robot.rotate(0, -90, true);
+    robot.stop();
+    Sleep(delay);
+    robot.rotate(1, -30, true, 2, 30);
+    Sleep(delay);
+    robot.turn(15, 1);
+    Sleep(delay);
+    robot.rotate(0, 0, true, 1, 0);
+    Sleep(delay);
+    robot.rotate(2, 5, true);
+    Sleep(delay);
+    robot.turn(20, 1);
+    robot.defaultArm();
+    Sleep(delay);
+    robot.turn(35, -1);
 }
 
-void lift(Robot robot) {
-    LCD.WriteLine("lift");
-    robot.stop();
+void lift(Robot &robot) {
+    robot.rotate(1, 20, false, 2, -32);
+    Sleep(delay);
+    robot.move_forward(4);
+    Sleep(delay);
+    robot.rotate(2, -10, true);
+    Sleep(delay);
+    robot.rotate(2, -40, true, 1, 90);
 }
 
-void drop(Robot robot) {
-    LCD.WriteLine("drop");
-    robot.stop();
+void drop(Robot &robot) {
+    robot.rotate(0, 20, true, 2, -70);
+    Sleep(1500);
+    robot.move_forward(-2.5, 2);
+    robot.defaultArm();
 }
 
-void levers(Robot robot) {
-    LCD.WriteLine("levers");
-    robot.stop();
+void levers(Robot &robot) {
+    int8_t lever = robot.lever();
+    float distBetweenLevers = 5;
+    if (lever > 0) {
+        robot.turn(90, -1);
+        Sleep(delay);
+        robot.move_forward(lever * distBetweenLevers, 2);
+        Sleep(delay);
+        robot.turn(90, 1);
+        Sleep(delay);
+    }
+    lever += -1;
+    robot.rotate(1, -20, true);
+    robot.move_forward(-2, 2);
+    Sleep(delay);
+    robot.rotate(1, -60);
+    robot.move_forward(2, 2);
+    Sleep(4500);
+    robot.rotate(1, -5, true);
+    Sleep(delay);
+    robot.move_forward(-4, 2);
+    robot.defaultArm();
+    if (lever != 0) {
+        robot.turn(90, lever);
+        Sleep(delay);
+        robot.move_forward(distBetweenLevers, 2);
+        Sleep(delay);
+        robot.turn(lever * 45 + 90, lever);
+    } else {
+        robot.turn(135, -1);
+    }
 }
 
-void buttons(Robot robot) {
+void buttons(Robot &robot) {
     robot.move_forward(-0.5);
     Sleep(500);
 
     int8_t mode = 0;
+    int8_t i = 0;
     while (true) {
         for (int i = 0; i < 15; i++) {
             mode += robot.lightColor();
             Sleep(delay / 5);
         }
 
+        LCD.Clear(BLACK);
+        LCD.SetFontColor(WHITE);
         LCD.WriteLine("Light Color:");
         if (mode < -5) {
+            LCD.Clear(BLACK);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
             LCD.WriteLine("Blue");
             mode = -1;
             break;
         } else if (mode > 5) {
+            LCD.Clear(BLACK);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
             LCD.WriteLine("Red");
             mode = 1;
             break;
-        } else {
+        } else if (i < 5) {
             LCD.WriteLine("Inconclusive");
             LCD.WriteLine("Trying Again...");
             mode = 0;
+            i++;
+        } else {
+            LCD.Clear(BLACK);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
+            LCD.WriteLine("Inconclusive");
+            LCD.WriteLine("Defaulting to Red");
+            mode = 1;
         }
     }
 
-    robot.turn(90, mode);
+    robot.rotate(0, -mode * 45);
     Sleep(delay);
-    robot.move_forward(3);
+    robot.rotate(1, -40, true, 2, 40);
     Sleep(delay);
-    robot.turn(90, -mode);
+    robot.rotate(1, -30, true, 2, 30);
     Sleep(delay);
-    robot.move_forward(8, 2);
+    robot.rotate(1, -40, true, 2, 40);
     Sleep(delay);
-    robot.move_forward(-3);
-    Sleep(delay);
-    robot.turn(90, -mode);
-    Sleep(delay);
-    robot.move_forward(3);
-    Sleep(delay);
-    robot.turn(90, -mode);
+    robot.defaultArm();
+    robot.turn(180, 1);
 }
 
-void window(Robot robot) {
-    LCD.WriteLine("window");
-    robot.stop();
+void window(Robot &robot) {
+    robot.rotate(0, -40, true, 2, -90);
+    Sleep(delay);
+    robot.rotate(0, 40, true, 2, -70);
+    Sleep(delay);
+    robot.rotate(0, 20, true, 2, 90);
+    Sleep(delay);
+    robot.rotate(0, 50, true, 2, -40);
+    Sleep(delay);
+    robot.rotate(0, -10, true, 2, -90);
+    Sleep(delay);
+    robot.move_forward(-4, 2);
+    Sleep(delay);
+    robot.defaultArm();
 }
 
-void dance(Robot robot) {
+void dance(Robot &robot) {
     for (int i = 0; i < 10; i++) {
         robot.move_forward(1);
         robot.move_forward(-1);
@@ -79,40 +163,66 @@ void dance(Robot robot) {
     }
 }
 
-void runCourse(Robot robot) { // god function hahahaha bad practice can't stop me
-    while (!robot.detect(1));
+void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop me
+    robot.initialize();
     
     // start button
     robot.move_forward(5, 2);
     Sleep(delay);
-    robot.turn(135, 1);
+    robot.turn(135, -1);
+    Sleep(delay);
+
+    // initial alignment step so starting position doesn't matter
+    robot.move_forward(3, 2);
+    Sleep(delay);
+    robot.turn(90, -1);
+    Sleep(delay);
+    robot.move_forward(-20, 2);
+    Sleep(delay);
+    robot.move_forward(8, 2);
+    Sleep(delay);
+    robot.turn(90, 1);
+    Sleep(delay);
+    robot.move_forward(-20, 2);
     Sleep(delay);
 
     // compost
-    robot.move_forward(5, 2);
+    robot.move_forward(2, 2);
     Sleep(delay);
-    robot.hug(-1);
+    robot.turn(90, -1);
+    Sleep(delay);
+    robot.move_forward(-2.5, 2);
     Sleep(delay);
     robot.stop(); // checkpoint
-    robot.move_forward(20, 2);
-    Sleep(delay);
     compost(robot);
     Sleep(delay);
 
-    // lift bucket
+    // window
+    robot.move_forward(3, 2);
+    Sleep(delay);
     robot.turn(90, 1);
+    Sleep(delay);
+    robot.move_forward(-5, 2);
     Sleep(delay);
     robot.move_forward(36, 2);
     Sleep(delay);
-    robot.move_forward(-6);
+    robot.move_forward(-2.5, 2);
+    Sleep(delay);
+    robot.stop(); // checkpoint
+    window(robot);
+    Sleep(delay);
+
+    // lift bucket
+    robot.move_forward(12, 2);
+    Sleep(delay);
+    robot.move_forward(-4);
     Sleep(delay);
     robot.turn(90, -1);
     robot.stop(); // checkpoint
     Sleep(delay);
-    robot.move_forward(2, 2);
+    robot.move_forward(3.5, 2);
     Sleep(delay);
     lift(robot);
-    robot.move_forward(-4);
     Sleep(delay);
 
     // drop bucket
@@ -125,56 +235,59 @@ void runCourse(Robot robot) { // god function hahahaha bad practice can't stop m
     Sleep(delay);
     robot.move_forward(36, 2);
     Sleep(delay);
+    robot.move_forward(1, 2);
+    Sleep(delay);
     robot.turn(90, -1);
     Sleep(delay);
-    robot.move_forward(40, 2);
+    robot.move_forward(26, 2);
     Sleep(delay);
+    robot.hug(1);
+    Sleep(delay);
+    robot.turn(5, 1);
+    Sleep(delay);
+    robot.move_forward(24, 2);
+    Sleep(delay);
+    robot.move_forward(2, 2);
+    Sleep(delay);
+    robot.stop(); // checkpoint
+    drop(robot);
+    Sleep(delay);
+
+    // levers
     robot.turn(90, -1);
     Sleep(delay);
     robot.move_forward(-9, 2);
     Sleep(delay);
-    robot.move_forward(5, 2);
+    robot.move_forward(14, 2);
     Sleep(delay);
     robot.turn(90, 1);
     robot.stop(); // checkpoint
     Sleep(delay);
     robot.move_forward(16, 2);
     Sleep(delay);
-    robot.turn(90, 1);
-    Sleep(delay);
-    drop(robot);
-    Sleep(delay);
     robot.turn(90, -1);
     Sleep(delay);
-
-    // levers
-    robot.move_forward(20, 2);
-    Sleep(delay);
-    robot.move_forward(-2, 2);
-    Sleep(delay);
-    robot.turn(90, -1);
-    robot.stop(); // checkpoint
-    Sleep(delay);
-    robot.move_forward(10, 2);
+    robot.move_forward(2.5, 2);
     Sleep(delay);
     robot.turn(45, 1);
     Sleep(delay);
+    robot.move_forward(-1, 2);
+    Sleep(delay);
+    robot.stop(); // checkpoint
     levers(robot);
     Sleep(delay);
-    robot.turn(135, -1);
     robot.stop(); // checkpoint
-    Sleep(delay);
 
     // buttons
-    robot.move_forward(36, 2);
+    robot.move_forward(16, 1); // might add realignment step between if needed
     robot.stop(); // checkpoint
     Sleep(delay);
-    robot.move_forward(-6, 2);
+    robot.move_forward(3, 2);
     Sleep(delay);
     robot.turn(90, 1);
     Sleep(delay);
     robot.stop(); // checkpoint
-    robot.move_forward(-5, 1);
+    robot.move_forward(-6, 1);
     Sleep(delay);
     robot.stop(); // checkpoint
     buttons(robot);
@@ -183,19 +296,27 @@ void runCourse(Robot robot) { // god function hahahaha bad practice can't stop m
     // stop button
     robot.move_forward(34, 2);
     Sleep(delay);
-    robot.move_forward(0.6);
+    robot.move_forward(-0.6);
     Sleep(delay);
     robot.turn(90, 1);
     Sleep(delay);
-    robot.move_forward(35.5, 2);
+    robot.move_forward(-6, 2);
     Sleep(delay);
-    robot.turn(45, -1);
+    robot.move_forward(33, 2);
     Sleep(delay);
-    robot.move_forward(4, 2);
+    robot.turn(90, 1);
+    Sleep(delay);
+    robot.move_forward(-10, 2);
+    Sleep(delay);
+    robot.move_forward(10, 2);
+    Sleep(delay);
+    robot.turn(135, -1);
+    Sleep(delay);
+    robot.move_forward(10, 2);
+    Sleep(delay);
     robot.stop(); // checkpoint
     
     // victory dance
-    Sleep(delay);
     robot.move_forward(-4);
     Sleep(delay);
     dance(robot);
