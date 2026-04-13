@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import os
 import re
@@ -75,8 +74,6 @@ def parse_installed_version_from_pkg_list(pkg: str, pioenv: str) -> str | None:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            encoding='utf-8',
-            errors='replace',
             check=False,
         )
     except Exception as e:
