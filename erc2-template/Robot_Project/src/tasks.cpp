@@ -1,4 +1,5 @@
 #include <tasks.h>
+#include <FEHBuzzer.h>
 
 void compost(Robot &robot) {
     robot.rotate(2, -90);
@@ -162,6 +163,16 @@ void dance(Robot &robot) {
         robot.turn(60, 1);
     }
 }
+void playSong(Robot &robot) {
+    Buzzer.Tone(Buzzer.NOTE_F5);
+    Buzzer.Tone(Buzzer.NOTE_E5);
+    Buzzer.Tone(Buzzer.NOTE_DS5);
+    Buzzer.Tone(Buzzer.NOTE_EF5);
+    Buzzer.Tone(Buzzer.NOTE_D5);
+    Buzzer.Tone(Buzzer.NOTE_CS5);
+    Buzzer.Tone(Buzzer.NOTE_DF5);
+
+}
 
 void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop me
     robot.initialize();
@@ -320,4 +331,6 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.move_forward(-4);
     Sleep(delay);
     dance(robot);
+    playSong(robot);
+
 }
