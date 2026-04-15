@@ -5,7 +5,7 @@
 #include <robot.h>
 #include <tasks.h>
 
-// AnalogInputPin test_light_sensor(FEHIO::Pin2);
+// AnalogInputPin test_light_sensor(FEHIO::Pin14);
 
 void ERCMain()
 {
@@ -13,6 +13,7 @@ void ERCMain()
 
     runCourse(robot);
 
+    // robot.stop();
     // int x, y;
     // float min = 5, max = 0;
     // float test;

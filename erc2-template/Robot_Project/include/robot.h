@@ -5,22 +5,28 @@
 #include <FEHSD.h>
 #include <FEH.h>
 #include <utils.h>
+#include <radio.h>
 
 #define SPEED 35
-#define delay 100
+#define SPRINT 50
+#define delay 50
 
 class Robot {
     private:
-        const bool debugMode = false;
-        const float left_opto_threshold = 3; // may need to change
-        const float right_opto_threshold = 2.5;
+        const bool debugMode = true;
+        const uint8_t universalPause = 5;
         // servo min/max, light sensor thresholds, others
-        const float blue_threshold = 2;
-        const float red_threshold = 0.85;
-        const int8_t check_time = 50; // miliseconds, for collision checks
         int16_t baseAngle = 90, joint1Angle = 180, joint2Angle = 10;
         int16_t angles[3] = {baseAngle, joint1Angle, joint2Angle};
-        uint8_t rotateSpeed = 20, rotateIncrement = 50; // rotateSpeed: pause time between increments in milliseconds
+        const uint8_t rotateSpeed = 20, rotateIncrement = 50; // rotateSpeed: pause time between increments in milliseconds
+
+        // music
+        long musicStartTime = 0;
+        const bool musicLoop = true;
+        int currentIndex = 0;
+        uint16_t currentFrameInIndex = 0;
+        int previousFrames = 0;
+        void musicPlayer();
 
     public:
         void initialize();
@@ -33,6 +39,12 @@ class Robot {
         void rotate(int8_t jointIndex, int16_t angle, boolean slow = false, int8_t jointIndex2 = 4, int16_t angle2 = 0); // base = 0, joint1 = 1, joint2 = 2
         void defaultArm();
         int8_t lever();
+        void Pause(uint16_t milli);
+
+        // overloaded function, because the implementation feels cleaner (pain to call though, probably won't be used much)
+        void rotate(int8_t joint[], int16_t angle[], int8_t size = 1, boolean slow = false);
+
+        void sprint(float inches, int8_t highSpeed = SPRINT, int8_t lowSpeed = 40);
 
         void stop(); // for testing only
 };
