@@ -1,5 +1,8 @@
 #include <tasks.h>
 
+/*
+Runs the compost task sequence
+*/
 void compost(Robot &robot) {
     robot.rotate(2, -90);
     robot.rotate(0, -90, true, 1, -20);
@@ -25,6 +28,9 @@ void compost(Robot &robot) {
     robot.move_forward(2, 2); // move back
 }
 
+/*
+Runs the bucket lifting sequence
+*/
 void lift(Robot &robot) {
     robot.rotate(1, 20, false, 2, -32); // positioning
     robot.move_forward(4);
@@ -32,6 +38,9 @@ void lift(Robot &robot) {
     robot.rotate(2, -20, true, 1, 90); // lift
 }
 
+/*
+Runs the bucket dropping sequence
+*/
 void drop(Robot &robot) {
     robot.rotate(0, 23, true, 2, -90); // drop
     robot.Pause(500);
@@ -40,6 +49,9 @@ void drop(Robot &robot) {
     robot.move_forward(1.2, 2);
 }
 
+/*
+Runs the lever sequence
+*/
 void levers(Robot &robot) {
     int8_t lever = robot.lever();
     const float distBetweenLevers = 4.5;
@@ -81,6 +93,9 @@ void levers(Robot &robot) {
     }
 }
 
+/*
+Runs the buttons sequence
+*/
 void buttons(Robot &robot) {
     robot.move_forward(0.5, 0, false, 20);
     robot.Pause(200);
@@ -145,6 +160,9 @@ void buttons(Robot &robot) {
     robot.turn(90, -mode);
 }
 
+/*
+Runs the window sequence
+*/
 void window(Robot &robot) {
     robot.rotate(0, -50);
     robot.rotate(1, 70, true, 2, -60); // positioning
@@ -159,6 +177,9 @@ void window(Robot &robot) {
     robot.defaultArm();
 }
 
+/*
+Runs a dance sequence for fun
+*/
 void dance(Robot &robot) {
     robot.rotate(2, -90, true);
     for (int i = 0; i < 3; i++) {
@@ -179,6 +200,9 @@ void dance(Robot &robot) {
     }
 }
 
+/*
+Main sequence to run through the entire course
+*/
 void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop me
     robot.initialize();
     

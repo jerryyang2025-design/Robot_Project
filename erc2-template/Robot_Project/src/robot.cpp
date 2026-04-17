@@ -15,6 +15,9 @@ FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
+/*
+Helper function to prevent stray values from exceeding servo range
+*/
 uint8_t Robot::clampServo(float value) {
     if (value > 180) {
         return 180;
@@ -25,6 +28,9 @@ uint8_t Robot::clampServo(float value) {
     }
 }
 
+/*
+Runs the initial starting sequence
+*/
 void Robot::initialize() {
     // defaultArm();
     rotate(2, -90, true); // to prevent arm from poking out past size limit
@@ -47,6 +53,9 @@ void Robot::initialize() {
     musicStartTime = millis();
 }
 
+/*
+Drive the robot forwards or backwards a specified distance while optionally checking for encoder stall or light detection
+*/
 bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -102,6 +111,9 @@ bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) 
     return stopped;
 }
 
+/*
+Turns the robot left or right a specified angle
+*/
 bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive: turn right, negative: turn left
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -131,6 +143,9 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     return stopped;
 }
 
+/*
+Was meant to have a bunch of checks, ended up only being used to check light detection
+*/
 bool Robot::detect(int8_t type) { // 0 = none, 1 = light
     if (type == 0) {
         return false;
@@ -144,6 +159,9 @@ bool Robot::detect(int8_t type) { // 0 = none, 1 = light
     return detected;
 }
 
+/*
+Detects and returns the light color
+*/
 int8_t Robot::lightColor() { // 0 = no light, -1 = blue, 1 = red
     if (light_sensor.Value() <= redThreshold) {
         return 1;
@@ -154,31 +172,38 @@ int8_t Robot::lightColor() { // 0 = no light, -1 = blue, 1 = red
     }
 } // values were closer than expected even with color filter, might just have to accept it, too late to fix
 
+/*
+Stops the robot for adjustment during test runs for debugging
+*/
 void Robot::stop(const char* msg) {
-    if (debugMode) {
-        int x, y;
-        LCD.Clear(BLACK);
-        LCD.SetFontColor(WHITE);
-        LCD.WriteLine("Paused");
-        LCD.Write("\nStep: ");
-        LCD.WriteLine(msg);
-        LCD.WriteLine();
-        LCD.WriteLine("Touch the screen to continue");
-        while(!LCD.Touch(&x,&y)) { //Wait for screen to be pressed
-            Pause(universalPause);
-        }
-        while(LCD.Touch(&x,&y)) { //Wait for screen to be unpressed
-            Pause(universalPause);
-        }
-        LCD.WriteLine("3");
-        Pause(1000);
-        LCD.WriteLine("2");
-        Pause(1000);
-        LCD.WriteLine("1");
-        Pause(1000);
+    if (!debugMode) {
+        return;
     }
+    int x, y;
+    LCD.Clear(BLACK);
+    LCD.SetFontColor(WHITE);
+    LCD.WriteLine("Paused");
+    LCD.Write("\nStep: ");
+    LCD.WriteLine(msg);
+    LCD.WriteLine();
+    LCD.WriteLine("Touch the screen to continue");
+    while(!LCD.Touch(&x,&y)) { //Wait for screen to be pressed
+        Pause(universalPause);
+    }
+    while(LCD.Touch(&x,&y)) { //Wait for screen to be unpressed
+        Pause(universalPause);
+    }
+    LCD.WriteLine("3");
+    Pause(1000);
+    LCD.WriteLine("2");
+    Pause(1000);
+    LCD.WriteLine("1");
+    Pause(1000);
 }
 
+/*
+Hugs the robot to the wall on either side to reorient itself
+*/
 void Robot::hug(int8_t side) { // 0 = front, 1 = right side, -1 = left side
     turn(90, -side);
     Pause(delay);
@@ -190,7 +215,7 @@ void Robot::hug(int8_t side) { // 0 = front, 1 = right side, -1 = left side
 }
 
 /*
-Retired function
+{Retired function} Sweeps the robot back and forth until it finds the light
 */
 void Robot::sweep(float inches, int8_t angle, float gap) {
     if (detect(1)) {
@@ -206,6 +231,9 @@ void Robot::sweep(float inches, int8_t angle, float gap) {
     }
 }
 
+/*
+Rotate up to two arm segments at a time, optionally performing linear interpolation (LERP) to rotate them at a slower speed
+*/
 void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int16_t angle2) {
     int16_t moveAngle = angle;
     int16_t moveAngle2 = angle2;
@@ -248,6 +276,9 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
     }
 }
 
+/*
+Overloaded rotate function to accept an array of values for a more elegant implementation
+*/
 void Robot::rotate(int8_t joint[], int16_t angle[], int8_t size, boolean slow) { // overloaded function, because the implementation feels cleaner (pain to call though, probably won't be used much)
     int16_t moveAngle[size];
     int8_t steps = rotateIncrement;
@@ -277,6 +308,9 @@ void Robot::rotate(int8_t joint[], int16_t angle[], int8_t size, boolean slow) {
     }
 }
 
+/*
+Moves the arm back to a default position when not being used to avoid interferring with navigation
+*/
 void Robot::defaultArm() {
     // rotate(0, 0);
     // rotate(1, 90);
@@ -290,10 +324,16 @@ void Robot::defaultArm() {
     angles[2] = 10;
 }
 
+/*
+Maps the RCS lever value to a more useful value and allows the value to be read from another file
+*/
 int8_t Robot::lever() {
     return 2 - RCS.GetLever();
 }
 
+/*
+Drives the robot a specified distance while incrementing velocity in a parabolic arc to allow for faster speeds more smoothly
+*/
 void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -345,6 +385,9 @@ void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
     left_motor.Stop();
 }
 
+/*
+Pauses code execution while continuously playing music in the background
+*/
 void Robot::Pause(uint16_t milli) {
     int increments = milli / universalPause;
     for (int i = 0; i < increments; i++) {
@@ -353,6 +396,9 @@ void Robot::Pause(uint16_t milli) {
     }
 }
 
+/*
+Plays the appropriate music frequencies on beat according to a specified song array, with guards to prevent unexpected jumps or other behaviors
+*/
 void Robot::musicPlayer() {
     if (!musicStarted) {
         return;
@@ -383,6 +429,9 @@ void Robot::musicPlayer() {
     }
 }
 
+/*
+Debug test function with minimal implementation to drive forward 5 inches
+*/
 void Robot::test1() {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -414,6 +463,9 @@ void Robot::test1() {
     left_motor.Stop();
 }
 
+/*
+Debug test function with minimal implementation to turn right 90 degrees
+*/
 void Robot::test2() {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -443,6 +495,9 @@ void Robot::test2() {
     left_motor.Stop();
 }
 
+/*
+Clean debug testing interface
+*/
 void Robot::debugTest(uint8_t test) {
     if (!debugMode) {
         return;

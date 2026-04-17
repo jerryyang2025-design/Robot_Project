@@ -7,6 +7,9 @@
 
 // AnalogInputPin test_light_sensor(FEHIO::Pin14);
 
+/*
+Main function to instantiate Robot class and complete tasks
+*/
 void ERCMain()
 {
     Robot robot;
