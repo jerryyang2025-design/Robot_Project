@@ -4,7 +4,7 @@ from mido import MidiFile, tick2second
 # ----------------------------
 # SETTINGS
 # ----------------------------
-FRAME_MS = 40
+FRAME_MS = 20
 FRAME_SEC = FRAME_MS / 1000
 
 A4 = 440.0
@@ -15,7 +15,7 @@ def midi_to_freq(n):
 # ----------------------------
 # LOAD MIDI
 # ----------------------------
-INPUT_FILE = "midi_files/ASGORE.mid"
+INPUT_FILE = "midi_files/Megalovania.mid"
 midi = MidiFile(INPUT_FILE)
 
 events = []

@@ -15,7 +15,7 @@ FEHServo joint1(FEHServo::Servo1);
 FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
-uint8_t clampServo(float value) { // single function, not worth using the utils file
+uint8_t Robot::clampServo(float value) {
     if (value > 180) {
         return 180;
     } else if (value < 0) {
@@ -26,26 +26,24 @@ uint8_t clampServo(float value) { // single function, not worth using the utils 
 }
 
 void Robot::initialize() {
-    defaultArm();
+    // defaultArm();
+    rotate(2, -90, true); // to prevent arm from poking out past size limit
+    rotate(0, 90, true);
+    rotate(1, -90, true);
     RCS.InitializeTouchMenu("0300G9LQG");
 
     WaitForFinalAction();
     
-    // int x, y;
-    // LCD.Clear(BLACK);
-    // LCD.SetFontColor(WHITE);
-    // LCD.WriteLine("Paused");
-    // LCD.WriteLine("Touch the screen to continue");
-    // while(!LCD.Touch(&x,&y)); //Wait for screen to be pressed
-    // while(LCD.Touch(&x,&y)); //Wait for screen to be unpressed
-    // LCD.WriteLine("3");
-    // Sleep(1000);
-    // LCD.WriteLine("2");
-    // Sleep(1000);
-    // LCD.WriteLine("1");
-    // Sleep(1000);
-    
     while (!detect(1));
+    for (int i = 0; i < 20; i++) { // probably not a good idea since it depends on where we initially put it
+        float test = light_sensor.Value(); // so might remove
+        if (test > redThreshold) {
+            redThreshold = test;
+        }
+        Pause(universalPause);
+    }
+
+    musicStarted = true;
     musicStartTime = millis();
 }
 
@@ -68,23 +66,30 @@ bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) 
     left_motor.SetPercent(percent);
 
     bool stopped = false;
+    int stall = 0;
 
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts && !detect(early)) {
         int currentLeftCounts = left_encoder.Counts();
         int currentRightCounts = right_encoder.Counts();
+
         Pause(universalPause);
-        if (early == 2) {
+        if (early == 2 && left_encoder.Counts() > 10 && right_encoder.Counts() > 10) {
             if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
-                stopped = true;
-                if (!backUp) { // default false since slipping causes inconsistencies, so stopping is enough, no need to move back based on luck
+                stall++;
+                if (stall > 10) {
+                    stopped = true;
+                    if (!backUp) { // default false since slipping causes inconsistencies, so stopping is enough, no need to move back based on luck
+                        break;
+                    }
+                    if (inches < 0) {
+                        move_forward(2);
+                    } else if (inches > 0) {
+                        move_forward(-2);
+                    }
                     break;
                 }
-                if (inches < 0) {
-                    move_forward(2);
-                } else if (inches > 0) {
-                    move_forward(-2);
-                }
-                break;
+            } else {
+                stall = 0;
             }
         }
     }
@@ -131,7 +136,7 @@ bool Robot::detect(int8_t type) { // 0 = none, 1 = light
         return false;
     }
     bool detected = false;
-    if (type == 1) {
+    if (type == 1) { // so I was going to have more, hence an int instead of bool, but ended up not doing that
         if (lightColor() != 0) {
             detected = true;
         }
@@ -140,21 +145,24 @@ bool Robot::detect(int8_t type) { // 0 = none, 1 = light
 }
 
 int8_t Robot::lightColor() { // 0 = no light, -1 = blue, 1 = red
-    if (light_sensor.Value() < 0.8) { // && light_sensor.Value() > 0.6) {
+    if (light_sensor.Value() <= redThreshold) {
         return 1;
-    } else if (light_sensor.Value() < 3 && light_sensor.Value() > 0.8) {
+    } else if (light_sensor.Value() < 1.2 && light_sensor.Value() > redThreshold) {
         return -1;
     } else {
         return 0;
     }
-}
+} // values were closer than expected even with color filter, might just have to accept it, too late to fix
 
-void Robot::stop() {
+void Robot::stop(const char* msg) {
     if (debugMode) {
         int x, y;
         LCD.Clear(BLACK);
         LCD.SetFontColor(WHITE);
         LCD.WriteLine("Paused");
+        LCD.Write("\nStep: ");
+        LCD.WriteLine(msg);
+        LCD.WriteLine();
         LCD.WriteLine("Touch the screen to continue");
         while(!LCD.Touch(&x,&y)) { //Wait for screen to be pressed
             Pause(universalPause);
@@ -204,7 +212,7 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
     if (joint == 0) {
         moveAngle = angle + 90;
     } else if (joint == 1) {
-        moveAngle = angle + 90;
+        moveAngle = angle + 110;
     } else if (joint == 2) {
         moveAngle = 100 - angle;
     }
@@ -212,7 +220,7 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
     if (joint2 == 0) {
         moveAngle2 = angle2 + 90;
     } else if (joint2 == 1) {
-        moveAngle2 = angle2 + 90;
+        moveAngle2 = angle2 + 110;
     } else if (joint2 == 2) {
         moveAngle2 = 100 - angle2;
     }
@@ -251,7 +259,7 @@ void Robot::rotate(int8_t joint[], int16_t angle[], int8_t size, boolean slow) {
         if (joint[i] == 0) {
             moveAngle[i] = angle[i] + 90;
         } else if (joint[i] == 1) {
-            moveAngle[i] = angle[i] + 90;
+            moveAngle[i] = angle[i] + 110;
         } else if (joint[i] == 2) {
             moveAngle[i] = 100 - angle[i];
         }
@@ -273,8 +281,9 @@ void Robot::defaultArm() {
     // rotate(0, 0);
     // rotate(1, 90);
     // rotate(2, 90);
-    servos[0].SetDegree(90);
+
     servos[1].SetDegree(180);
+    servos[0].SetDegree(90);
     servos[2].SetDegree(10);
     angles[0] = 90;
     angles[1] = 180;
@@ -303,6 +312,7 @@ void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
     right_motor.SetPercent(adjustment * percent);
     left_motor.SetPercent(percent);
 
+    int stall = 0;
     float increments;
     // int8_t increments = -8 * (highSpeed - lowSpeed) / (counts * counts) * currentDistance + 4 * (highSpeed - lowSpeed) / counts; // derivative of parabola
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
@@ -318,9 +328,16 @@ void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
         right_motor.SetPercent(adjustment * percent);
         left_motor.SetPercent(percent);
 
-        Pause(universalPause); // emergency brakes, should never be triggered, just a backup
+        Pause(universalPause);
         if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
-            break;
+            if (left_encoder.Counts() > 10 && right_encoder.Counts() > 10) { // makes sure it doesn't include the initial stall, just in case
+                stall++;
+                if (stall > 10) {
+                    break;
+                }
+            } else {
+                stall = 0;
+            }
         }
     }
 
@@ -337,8 +354,12 @@ void Robot::Pause(uint16_t milli) {
 }
 
 void Robot::musicPlayer() {
+    if (!musicStarted) {
+        return;
+    }
+
     long duration = millis() - musicStartTime;
-    long totalLength = song_length_Asgore;
+    long totalLength = song_length_Megalovania;
     if (duration > totalLength) {
         if (musicLoop) {
             musicStartTime = millis();
@@ -353,11 +374,107 @@ void Robot::musicPlayer() {
         if (temp > previousFrames) {
             previousFrames = temp;
             currentFrameInIndex++;
-            if (currentFrameInIndex >= pgm_read_word(&(song_Asgore[currentIndex][1]))) {
+            if (currentFrameInIndex >= pgm_read_word(&(song_Megalovania[currentIndex][1]))) {
                 currentFrameInIndex = 0;
                 currentIndex++;
             }
-            Buzzer.Tone(pgm_read_word(&(song_Asgore[currentIndex][0])));
+            Buzzer.Tone(pgm_read_word(&(song_Megalovania[currentIndex][0])));
         }
+    }
+}
+
+void Robot::test1() {
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+
+    int8_t percent = 35;
+    int8_t inches = 5;
+
+    float counts = inches * 40.5f;
+
+    right_motor.SetPercent(percent);
+    left_motor.SetPercent(percent);
+
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
+        int currentLeftCounts = left_encoder.Counts();
+        int currentRightCounts = right_encoder.Counts();
+        LCD.Write(currentLeftCounts); // apparently I can't concatenate them
+        LCD.Write(" : ");
+        LCD.WriteLine(currentRightCounts);
+        Pause(universalPause);
+
+        if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
+            if (left_encoder.Counts() > 10 && right_encoder.Counts() > 10) {
+                break;
+            }
+        }
+    }
+
+    right_motor.Stop();
+    left_motor.Stop();
+}
+
+void Robot::test2() {
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+
+    int8_t percent = 35;
+    int8_t direction = 1; // turn right
+    uint8_t degrees = 90;
+
+    const float radius = 3.6; // inches
+    const float pi = 3.141592653589793238462643383;
+
+    float counts = radius * 40.5f * degrees * pi / 180.0f;
+
+    right_motor.SetPercent(-direction * percent);
+    left_motor.SetPercent(direction * percent);
+
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
+        int currentLeftCounts = left_encoder.Counts();
+        int currentRightCounts = right_encoder.Counts();
+        LCD.Write(currentLeftCounts);
+        LCD.Write(" : ");
+        LCD.WriteLine(currentRightCounts);
+        Pause(universalPause);
+    }
+
+    right_motor.Stop();
+    left_motor.Stop();
+}
+
+void Robot::debugTest(uint8_t test) {
+    if (!debugMode) {
+        return;
+    }
+
+    int x, y;
+    LCD.Clear(BLACK);
+    LCD.SetFontColor(WHITE);
+    LCD.Write("Debug Test ");
+    LCD.WriteLine(test);
+    LCD.WriteLine("Touch the screen to begin");
+    while(!LCD.Touch(&x,&y)) {
+        Pause(universalPause);
+    }
+    while(LCD.Touch(&x,&y)) {
+        Pause(universalPause);
+    }
+    
+    if (test == 1) {
+        test1();
+    } else if (test == 2) {
+        test2();
+    }
+
+    LCD.Clear(GREEN);
+    LCD.SetFontColor(WHITE);
+    LCD.WriteLine("Test Complete");
+    LCD.WriteLine("Touch the screen to continue");
+    while(!LCD.Touch(&x,&y)) {
+        Pause(universalPause);
+    }
+    while(LCD.Touch(&x,&y)) {
+        Pause(universalPause);
     }
 }
