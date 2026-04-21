@@ -26,7 +26,7 @@
 
     -- second value, index [1] --
         {Not as significant, change other values first if you can}
-        determines how close to the table the robot is AFTER dropping off the bucket
+        determines how close to the table the robot is **AFTER** dropping off the bucket
         large value = closer, small value = farther
 
     -- third value, index [2] --
@@ -36,6 +36,11 @@
     -- fourth value, index [3] --
         determines how far left/right the robot is during the buttons task
         large value = farther right, small value = farther left
+
+    @warning
+    Check "tasks.cpp" for the orientation of the robot at each call
+    The robot may not be at a right angle
+    ie. Adding 1 to a particular value may not result in moving exactly 1 inch in the desired direction
 */
 const float courseSpecificMovements[8][8] = {
     {1.25, 3.7, 2, 4}, // A
