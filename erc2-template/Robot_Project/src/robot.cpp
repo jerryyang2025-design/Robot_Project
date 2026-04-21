@@ -16,13 +16,15 @@ FEHServo joint2(FEHServo::Servo2);
 FEHServo servos[3] = {base, joint1, joint2};
 
 /*
-Helper function to prevent stray values from exceeding servo range
+Helper function to catch stray values from exceeding hardware limits
+
+single function, not worth bringing the utils file out of retirement
 */
-uint8_t Robot::clampServo(float value) {
-    if (value > 180) {
-        return 180;
-    } else if (value < 0) {
-        return 0;
+uint16_t Robot::clamp(float value, float min, float max) {
+    if (value > max) {
+        return max;
+    } else if (value < min) {
+        return min;
     } else {
         return value;
     }
@@ -36,11 +38,16 @@ void Robot::initialize() {
     rotate(2, -90, true); // to prevent arm from poking out past size limit
     rotate(0, 90, true);
     rotate(1, -90, true);
-    RCS.InitializeTouchMenu("0300G9LQG");
+    if (!debugMode) {
+        RCS.InitializeTouchMenu("0300G9LQG");
+        currentCourse = RCS.CurrentRegionLetter() - 65; // for small adjustments to account for slight differences in each course
+    }
 
     WaitForFinalAction();
     
-    while (!detect(1));
+    if (!debugMode) {
+        while (!detect(1));
+    }
     for (int i = 0; i < 20; i++) { // probably not a good idea since it depends on where we initially put it
         float test = light_sensor.Value(); // so might remove
         if (test > redThreshold) {
@@ -82,10 +89,20 @@ bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) 
         int currentRightCounts = right_encoder.Counts();
 
         Pause(universalPause);
-        if (early == 2 && left_encoder.Counts() > 10 && right_encoder.Counts() > 10) {
+
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) { // a little more than half a degree, around 2-3 encoder counts
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 300.0f; // random value for now, needs tuning
+            left_motor.SetPercent(clamp(percent * (1 + correction), -100, 100)); // I have no idea why the signs are like this, feels backwards but it works
+            right_motor.SetPercent(clamp(percent * (1 - correction), -100, 100));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(percent);
+            left_motor.SetPercent(percent);
+        }
+
+        if (early == 2 && left_encoder.Counts() > 10 && right_encoder.Counts() > 10) { // ugly type of nesting that happens when you don't plan ahead or refactor code:
             if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
                 stall++;
-                if (stall > 10) {
+                if (stall > 50) {
                     stopped = true;
                     if (!backUp) { // default false since slipping causes inconsistencies, so stopping is enough, no need to move back based on luck
                         break;
@@ -118,9 +135,14 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
-    int8_t percent = SPEED;
+    int8_t percent = 25;
     float adjustment = 1.0f;
 
+    /*
+    technically the radius (track width / 2) isn't entirely accurate since the wheels are wonky, kind of just an average, really between 3.7 - 3.5
+    I don't feel like measuring the exact angle the wheel is attached at, tracking it at any given time, and calculating the exact desired encoder count
+    kind of just going to have to put up with a slight inaccuracy, or figure out a way to physically straighten the wheels despite the epoxy
+    */
     const float radius = 3.6; // inches
     const float pi = 3.141592653589793238462643383;
 
@@ -133,6 +155,15 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
 
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts * adjustment && !detect(early)) {
         Pause(universalPause);
+
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
+            left_motor.SetPercent(clamp(direction * percent * (1 + correction), -100, 100));
+            right_motor.SetPercent(clamp(-direction * percent * (1 - correction), -100, 100));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(-direction * percent);
+            left_motor.SetPercent(direction * percent);
+        }
     }
     if (detect(early)) {
         stopped = true;
@@ -165,7 +196,7 @@ Detects and returns the light color
 int8_t Robot::lightColor() { // 0 = no light, -1 = blue, 1 = red
     if (light_sensor.Value() <= redThreshold) {
         return 1;
-    } else if (light_sensor.Value() < 1.2 && light_sensor.Value() > redThreshold) {
+    } else if (light_sensor.Value() < 1 && light_sensor.Value() > redThreshold) {
         return -1;
     } else {
         return 0;
@@ -263,10 +294,10 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
         increment2 = 1.0f * (moveAngle2 - angles[joint2]) / steps;
     }
     for (int i = 0; i < steps; i++) {
-        servos[joint].SetDegree(clampServo(angles[joint] + increment * (i + 1)));
+        servos[joint].SetDegree(clamp(angles[joint] + increment * (i + 1), 0, 180));
 
         if (joint2 != 4) {
-            servos[joint2].SetDegree(clampServo(angles[joint2] + increment2 * (i + 1)));
+            servos[joint2].SetDegree(clamp(angles[joint2] + increment2 * (i + 1), 0, 180));
         }
         Pause(rotateSpeed);
     }
@@ -278,6 +309,8 @@ void Robot::rotate(int8_t joint, int16_t angle, boolean slow, int8_t joint2, int
 
 /*
 Overloaded rotate function to accept an array of values for a more elegant implementation
+
+random complaint, why can we not use any of the standard libraries, I hate raw C arrays
 */
 void Robot::rotate(int8_t joint[], int16_t angle[], int8_t size, boolean slow) { // overloaded function, because the implementation feels cleaner (pain to call though, probably won't be used much)
     int16_t moveAngle[size];
@@ -299,7 +332,7 @@ void Robot::rotate(int8_t joint[], int16_t angle[], int8_t size, boolean slow) {
 
     for (int i = 0; i < steps; i++) {
         for (int j = 0; j < size; j++) {
-            servos[joint[j]].SetDegree(clampServo(angles[joint[j]] + increment[j] * (i + 1)));
+            servos[joint[j]].SetDegree(clamp(angles[joint[j]] + increment[j] * (i + 1), 0, 180));
         }
         Pause(rotateSpeed);
     }
@@ -328,6 +361,9 @@ void Robot::defaultArm() {
 Maps the RCS lever value to a more useful value and allows the value to be read from another file
 */
 int8_t Robot::lever() {
+    if (debugMode) {
+        return 1;
+    }
     return 2 - RCS.GetLever();
 }
 
@@ -365,14 +401,24 @@ void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
         } else {
             percent += increments;
         }
-        right_motor.SetPercent(adjustment * percent);
+        right_motor.SetPercent(percent);
         left_motor.SetPercent(percent);
 
         Pause(universalPause);
+
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 300.0f; // random value for now, needs tuning
+            left_motor.SetPercent(clamp(percent * (1 + correction), -100, 100));
+            right_motor.SetPercent(clamp(percent * (1 - correction), -100, 100));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(percent);
+            left_motor.SetPercent(percent);
+        }
+        
         if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
             if (left_encoder.Counts() > 10 && right_encoder.Counts() > 10) { // makes sure it doesn't include the initial stall, just in case
                 stall++;
-                if (stall > 10) {
+                if (stall > 50) {
                     break;
                 }
             } else {
@@ -390,8 +436,12 @@ Pauses code execution while continuously playing music in the background
 */
 void Robot::Pause(uint16_t milli) {
     int increments = milli / universalPause;
+    long timeNow = millis();
     for (int i = 0; i < increments; i++) {
         musicPlayer();
+        if (millis() - timeNow >= milli) { // to account for code run time
+            return;
+        }
         Sleep(universalPause);
     }
 }
@@ -414,6 +464,7 @@ void Robot::musicPlayer() {
             previousFrames = 0;
         } else {
             Buzzer.Off();
+            musicStarted = false;
         }
     } else {
         long temp = duration / musicInterval;
@@ -430,28 +481,44 @@ void Robot::musicPlayer() {
 }
 
 /*
-Debug test function with minimal implementation to drive forward 5 inches
+Debug test function with minimal implementation to drive forward 36 inches
 */
 void Robot::test1() {
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
-    int8_t percent = 35;
-    int8_t inches = 5;
+    int8_t percent = SPEED;
+    int8_t inches = 36; // high so any drift will be more obvious
 
     float counts = inches * 40.5f;
 
     right_motor.SetPercent(percent);
     left_motor.SetPercent(percent);
 
+    long i = 0;
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
         int currentLeftCounts = left_encoder.Counts();
         int currentRightCounts = right_encoder.Counts();
-        LCD.Write(currentLeftCounts); // apparently I can't concatenate them
-        LCD.Write(" : ");
-        LCD.WriteLine(currentRightCounts);
+        if (i % 2400 == 0) {
+            LCD.Clear(BLACK);
+        }
+        if (i % 200 == 0) {
+            LCD.Write(currentLeftCounts); // apparently I can't concatenate them
+            LCD.Write(" : ");
+            LCD.WriteLine(currentRightCounts);
+        }
+        i++;
         Pause(universalPause);
 
+        // experimental feature, needs to be tested and refined with data
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.126) { // around 1 degree, just trust me
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
+            left_motor.SetPercent(percent * (1 + correction));
+            right_motor.SetPercent(percent * (1 - correction));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(percent);
+            left_motor.SetPercent(percent);
+        }
         if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
             if (left_encoder.Counts() > 10 && right_encoder.Counts() > 10) {
                 break;
@@ -464,7 +531,7 @@ void Robot::test1() {
 }
 
 /*
-Debug test function with minimal implementation to turn right 90 degrees
+Debug test function with minimal implementation to turn right 1080 degrees
 */
 void Robot::test2() {
     right_encoder.ResetCounts();
@@ -472,7 +539,7 @@ void Robot::test2() {
 
     int8_t percent = 35;
     int8_t direction = 1; // turn right
-    uint8_t degrees = 90;
+    uint16_t degrees = 1080; // high so any drift will be more obvious
 
     const float radius = 3.6; // inches
     const float pi = 3.141592653589793238462643383;
@@ -482,17 +549,98 @@ void Robot::test2() {
     right_motor.SetPercent(-direction * percent);
     left_motor.SetPercent(direction * percent);
 
+    long i = 0;
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts) {
         int currentLeftCounts = left_encoder.Counts();
         int currentRightCounts = right_encoder.Counts();
-        LCD.Write(currentLeftCounts);
-        LCD.Write(" : ");
-        LCD.WriteLine(currentRightCounts);
+        if (i % 2400 == 0) {
+            LCD.Clear(BLACK);
+        }
+        if (i % 200 == 0) {
+            LCD.Write(currentLeftCounts);
+            LCD.Write(" : ");
+            LCD.WriteLine(currentRightCounts);
+        }
+        i++;
         Pause(universalPause);
+
+        // experimental feature, needs to be tested and refined with data
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.126) { // around 1 degree, just trust me
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
+            left_motor.SetPercent(direction * percent * (1 + correction));
+            right_motor.SetPercent(-direction * percent * (1 - correction));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(-direction * percent);
+            left_motor.SetPercent(direction * percent);
+        }
     }
 
     right_motor.Stop();
     left_motor.Stop();
+}
+
+/*
+Debug test function to determine accuracy of light color detection from buttons function in tasks.cpp
+*/
+void Robot::test3() {
+    move_forward(16, 1);
+    stop("Check Position");
+    move_forward(0.5, 0, false, 20);
+    Pause(delay);
+    stop("Check Position");
+
+    int8_t mode = 0;
+    int8_t i = 0;
+    while (true) {
+        LCD.Clear(BLACK);
+        LCD.SetFontColor(WHITE);
+        for (int i = 0; i < 15; i++) { // read 15 light values
+            mode += lightColor();
+            move_forward((i % 2 * 2 - 1) * i / 50.0f, 2, false, 20); // moves a bit so it's not all the same value
+            LCD.Write(light_sensor.Value());
+            LCD.Write(" : ");
+            LCD.WriteLine(lightColor());
+            Pause(delay / 5);
+        }
+
+        LCD.Clear(BLACK);
+        LCD.SetFontColor(WHITE);
+        LCD.WriteLine("Light Color:");
+        if (mode < -5) { // check threshold for confidence
+            LCD.Clear(BLUE);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
+            LCD.WriteLine("Blue");
+            break;
+        } else if (mode > 5) {
+            LCD.Clear(RED);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
+            LCD.WriteLine("Red");
+            break;
+        } else if (i < 5) { // retries 5 times if fail
+            LCD.WriteLine("Inconclusive");
+            LCD.WriteLine("Trying Again...");
+            i++;
+            move_forward((i % 2 * 2 - 1) * i / 10.0f, 2, false, 20); // little adjustment in case it's not over the light
+        } else { // defaults after 5 failed attempts
+            LCD.Clear(RED);
+            LCD.SetFontColor(WHITE);
+            LCD.WriteLine("Light Color:");
+            LCD.WriteLine("Inconclusive");
+            LCD.WriteLine("Defaulting to Red");
+            break;
+        }
+    }
+
+    int x, y;
+    LCD.WriteLine("Touch the screen to continue");
+    while(!LCD.Touch(&x,&y)) {
+        Pause(universalPause);
+    }
+    while(LCD.Touch(&x,&y)) {
+        Pause(universalPause);
+    }
 }
 
 /*
@@ -520,6 +668,8 @@ void Robot::debugTest(uint8_t test) {
         test1();
     } else if (test == 2) {
         test2();
+    } else if (test == 3) {
+        test3();
     }
 
     LCD.Clear(GREEN);

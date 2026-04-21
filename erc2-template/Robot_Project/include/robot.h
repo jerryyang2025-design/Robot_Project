@@ -8,20 +8,20 @@
 #include <radio.h>
 
 #define SPEED 40
-#define SPRINT 75
+#define SPRINT 80
 #define delay 50
 
 class Robot {
     private:
-        const bool debugMode = false;
-        const uint8_t universalPause = 5;
+        const bool debugMode = true;
+        const uint8_t universalPause = 1;
         // servo min/max, light sensor thresholds, others
         int16_t baseAngle = 90, joint1Angle = 180, joint2Angle = 10;
         int16_t angles[3] = {baseAngle, joint1Angle, joint2Angle};
         const uint8_t rotateSpeed = 20, rotateIncrement = 50; // rotateSpeed: pause time between increments in milliseconds
         float redThreshold = 0.55;
 
-        uint8_t clampServo(float value);
+        uint16_t clamp(float value, float min, float max);
 
         // music
         bool musicStarted = false;
@@ -34,8 +34,11 @@ class Robot {
 
         void test1();
         void test2();
+        void test3();
 
     public:
+        uint8_t currentCourse = 0; // default course A
+
         void initialize();
         bool move_forward(float inches, int8_t early = 0, bool backUp = false, int8_t speed = SPEED); // refer to detect
         bool turn(int16_t degrees, int8_t direction, int8_t early = 0); // positive: turn right, negative: turn left
