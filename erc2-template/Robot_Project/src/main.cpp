@@ -14,8 +14,6 @@ void ERCMain()
 {
     Robot robot;
 
-    robot.debugTest(3);
-
     runCourse(robot);
 
     // robot.stop();

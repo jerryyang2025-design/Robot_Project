@@ -43,14 +43,14 @@
     ie. Adding 1 to a particular value may not result in moving exactly 1 inch in the desired direction
 */
 const float courseSpecificMovements[8][8] = {
-    {1.25, 3.7, 2, 4}, // A
-    {2.5, 3.7, 2, 4}, // B
-    {2.5, 3.7, 2, 4}, // C
-    {1.25, 3.7, 2, 4}, // D
-    {1.25, 3.7, 2, 4}, // E
-    {1.25, 3.7, 2, 4}, // F
-    {1.25, 3.7, 2, 4}, // G
-    {1.25, 3.7, 2, 4} // H
+    {2.5, 2, 5, 4}, // A
+    {2.5, 2, 5, 4}, // B
+    {2.5, 2, 5, 1.5}, // C
+    {1.75, 2, 5, 2.25}, // D
+    {2.5, 2, 5, 4}, // E
+    {1.25, 3.7, 5, 4}, // F
+    {2.5, 2, 5, 4}, // G
+    {2.5, 2, 5, 4} // H
 };
 
 void runCourse(Robot &robot);

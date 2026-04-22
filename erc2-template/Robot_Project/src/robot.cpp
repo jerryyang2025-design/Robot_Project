@@ -36,7 +36,7 @@ Runs the initial starting sequence
 void Robot::initialize() {
     // defaultArm();
     rotate(2, -90, true); // to prevent arm from poking out past size limit
-    rotate(0, 90, true);
+    rotate(0, -90, true);
     rotate(1, -90, true);
     if (!debugMode) {
         RCS.InitializeTouchMenu("0300G9LQG");
@@ -48,13 +48,13 @@ void Robot::initialize() {
     if (!debugMode) {
         while (!detect(1));
     }
-    for (int i = 0; i < 20; i++) { // probably not a good idea since it depends on where we initially put it
-        float test = light_sensor.Value(); // so might remove
-        if (test > redThreshold) {
-            redThreshold = test;
-        }
-        Pause(universalPause);
-    }
+    // for (int i = 0; i < 20; i++) { // probably not a good idea since it depends on where we initially put it
+    //     float test = light_sensor.Value(); // so might remove
+    //     if (test > redThreshold) {
+    //         redThreshold = test;
+    //     }
+    //     Pause(universalPause);
+    // }
 
     musicStarted = true;
     musicStartTime = millis();
@@ -102,7 +102,7 @@ bool Robot::move_forward(float inches, int8_t early, bool backUp, int8_t speed) 
         if (early == 2 && left_encoder.Counts() > 10 && right_encoder.Counts() > 10) { // ugly type of nesting that happens when you don't plan ahead or refactor code:
             if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
                 stall++;
-                if (stall > 50) {
+                if (stall > 250) {
                     stopped = true;
                     if (!backUp) { // default false since slipping causes inconsistencies, so stopping is enough, no need to move back based on luck
                         break;
@@ -135,7 +135,7 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
-    int8_t percent = 25;
+    int8_t percent = SPEED;
     float adjustment = 1.0f;
 
     /*
@@ -143,7 +143,7 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     I don't feel like measuring the exact angle the wheel is attached at, tracking it at any given time, and calculating the exact desired encoder count
     kind of just going to have to put up with a slight inaccuracy, or figure out a way to physically straighten the wheels despite the epoxy
     */
-    const float radius = 3.6; // inches
+    const float radius = 3.755; // inches
     const float pi = 3.141592653589793238462643383;
 
     float counts = radius * 40.5f * degrees * pi / 180.0f;
@@ -153,17 +153,17 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
 
     bool stopped = false;
 
-    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts * adjustment && !detect(early)) {
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts * adjustment) { // && !detect(early)) {
         Pause(universalPause);
 
-        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
-            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
-            left_motor.SetPercent(clamp(direction * percent * (1 + correction), -100, 100));
-            right_motor.SetPercent(clamp(-direction * percent * (1 - correction), -100, 100));
-        } else { // ensures it won't over correct and just wobble back and forth
-            right_motor.SetPercent(-direction * percent);
-            left_motor.SetPercent(direction * percent);
-        }
+        // if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
+        //     float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
+        //     left_motor.SetPercent(clamp(direction * percent * (1 + correction), -100, 100));
+        //     right_motor.SetPercent(clamp(-direction * percent * (1 - correction), -100, 100));
+        // } else { // ensures it won't over correct and just wobble back and forth
+        //     right_motor.SetPercent(-direction * percent);
+        //     left_motor.SetPercent(direction * percent);
+        // }
     }
     if (detect(early)) {
         stopped = true;
@@ -371,6 +371,11 @@ int8_t Robot::lever() {
 Drives the robot a specified distance while incrementing velocity in a parabolic arc to allow for faster speeds more smoothly
 */
 void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
+    if (inches < 4.5) {
+        move_forward(inches, 2);
+        return;
+    }
+
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
@@ -406,19 +411,19 @@ void Robot::sprint(float inches, int8_t highSpeed, int8_t lowSpeed) {
 
         Pause(universalPause);
 
-        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
-            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 300.0f; // random value for now, needs tuning
-            left_motor.SetPercent(clamp(percent * (1 + correction), -100, 100));
-            right_motor.SetPercent(clamp(percent * (1 - correction), -100, 100));
-        } else { // ensures it won't over correct and just wobble back and forth
-            right_motor.SetPercent(percent);
-            left_motor.SetPercent(percent);
-        }
+        // if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
+        //     float correction = (left_encoder.Counts() - right_encoder.Counts()) / 300.0f; // random value for now, needs tuning
+        //     left_motor.SetPercent(clamp(percent * (1 + correction), -100, 100));
+        //     right_motor.SetPercent(clamp(percent * (1 - correction), -100, 100));
+        // } else { // ensures it won't over correct and just wobble back and forth
+        //     right_motor.SetPercent(percent);
+        //     left_motor.SetPercent(percent);
+        // }
         
         if (left_encoder.Counts() == currentLeftCounts && right_encoder.Counts() == currentRightCounts) {
             if (left_encoder.Counts() > 10 && right_encoder.Counts() > 10) { // makes sure it doesn't include the initial stall, just in case
                 stall++;
-                if (stall > 50) {
+                if (stall > 250) {
                     break;
                 }
             } else {

@@ -8,12 +8,12 @@
 #include <radio.h>
 
 #define SPEED 40
-#define SPRINT 80
+#define SPRINT 70
 #define delay 50
 
 class Robot {
     private:
-        const bool debugMode = true;
+        const bool debugMode = false;
         const uint8_t universalPause = 1;
         // servo min/max, light sensor thresholds, others
         int16_t baseAngle = 90, joint1Angle = 180, joint2Angle = 10;

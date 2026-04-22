@@ -4,20 +4,20 @@
 Runs the compost task sequence
 */
 void compost(Robot &robot) {
-    robot.rotate(2, -90);
+    robot.rotate(2, -90, true);
     robot.rotate(0, -90, true, 1, -20);
     // robot.rotate((int8_t[]){0, 1, 2}, (int16_t[]){-90, -20, -90}, 3, true);
-    robot.rotate(2, 20); // finishes positioning
+    robot.rotate(2, 20, true); // finishes positioning
     robot.move_forward(0.5, 2); // moves the arm under the compost
     robot.rotate(1, 20, true, 2, -20); // rotate 90
     robot.stop(); // debug checkpoint
     robot.rotate(0, 120, true, 1, 32); // rotate 180
     robot.Pause(500);
-    robot.rotate(0, -90, true, 1, 20); // rotate back 180
+    robot.rotate(0, -90, true, 1, 15); // rotate back 180
     robot.rotate(1, -30, true, 2, 30); // rotate back 45
     robot.move_forward(-2, 2); // clearance
     robot.rotate(0, 70, true);
-    robot.rotate(1, -25, false, 2, 25);
+    robot.rotate(1, -22, false, 2, 22);
     robot.move_forward(2, 2); // positioning
     robot.rotate(0, -15, true, 2, 20); // finish rotating
     robot.Pause(delay);
@@ -68,7 +68,7 @@ void levers(Robot &robot) {
     robot.rotate(1, -60);
     robot.move_forward(2, 2); // move arm under lever
     robot.Pause(4250); // competition requirement
-    robot.rotate(1, -5, true); // push lever back up
+    robot.rotate(1, 0, true); // push lever back up
     robot.move_forward(-5, 2);
     robot.defaultArm();
     /*
@@ -94,10 +94,7 @@ void levers(Robot &robot) {
 Runs the buttons sequence
 */
 void buttons(Robot &robot) {
-    robot.move_forward(0.5, 0, false, 20);
-    robot.Pause(delay);
     robot.stop("Check Position");
-
     int8_t mode = 0;
     int8_t i = 0;
     while (true) {
@@ -164,7 +161,7 @@ Runs the window sequence
 */
 void window(Robot &robot) {
     robot.rotate(0, -50);
-    robot.rotate(1, 70, true, 2, -45); // positioning
+    robot.rotate(1, 70, true, 2, -42); // positioning
     robot.rotate(0, 0, true, 2, -90);
     robot.rotate(0, 47, true, 2, -70); // open window
     robot.Pause(delay);
@@ -172,8 +169,9 @@ void window(Robot &robot) {
     robot.rotate(1, 90, true, 2, 0); // clearance
     robot.rotate(0, 55, true);
     robot.rotate(1, 70, true, 2, -55); // positioning
+    robot.move_forward(-0.3, 2);
     robot.rotate(0, 0, true, 2, -90);
-    robot.rotate(0, -34, true, 2, -70); // close window
+    robot.rotate(0, -36, true, 2, -65); // close window
     robot.Pause(delay);
     robot.rotate(0, 0, true);
     robot.move_forward(-4, 2);
@@ -228,9 +226,9 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     // compost
     robot.move_forward(1.2, 2);
     robot.Pause(delay);
-    robot.turn(96, -1);
+    robot.turn(90, -1);
     robot.Pause(delay);
-    robot.move_forward(-2.7, 2);
+    robot.move_forward(-3.3, 2);
     robot.stop("Compost"); // debug checkpoint
     compost(robot);
 
@@ -256,7 +254,7 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
 
     // lift bucket
     robot.move_forward(12, 2); // align against garden front
-    robot.move_forward(-4.75);
+    robot.move_forward(-5);
     robot.Pause(delay);
     robot.turn(90, -1);
     robot.Pause(delay);
@@ -273,18 +271,17 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.turn(90, -1);
     robot.stop(); // debug checkpoint
     robot.Pause(delay);
-    robot.sprint(12);
-    robot.move_forward(6, 2); // align against right side
-    robot.move_forward(-1, 2);
-    robot.turn(92, -1);
+    robot.sprint(8);
+    robot.move_forward(10, 2); // align against right side
+    robot.move_forward(-1.3, 2);
+    robot.turn(90, -1);
     robot.Pause(delay);
     robot.move_forward(32, 2);
     robot.Pause(delay);
     robot.hug(1); // align against right side
     robot.Pause(delay);
-    robot.turn(3, 1);
-    robot.rotate(0, 0, true);
-    robot.move_forward(6, 2);
+    robot.rotate(0, 0, false);
+    robot.move_forward(12, 2);
     robot.move_forward(-1.5, 2);
     robot.stop("Drop Bucket"); // debug checkpoint
     drop(robot);
@@ -339,15 +336,14 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     // buttons
     robot.turn(90, -1);
     robot.move_forward(-9, 2); // align against right side
-    robot.sprint(3);
+    robot.move_forward(3);
     robot.Pause(delay);
     robot.turn(30, 1);
     robot.Pause(delay);
-    robot.sprint(courseSpecificMovements[robot.currentCourse][3]);
+    robot.move_forward(courseSpecificMovements[robot.currentCourse][3]);
     robot.Pause(delay);
     robot.turn(30, -1);
     robot.Pause(delay);
-    robot.sprint(5);
     bool foundLight = robot.move_forward(16, 1);
     robot.stop("Buttons"); // debug checkpoint
     if (foundLight) { // in case the sensor misses the light and just hits both buttons, idk might remove
@@ -360,15 +356,15 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.Pause(delay);
 
     // levers
-    robot.sprint(-20);
-    robot.move_forward(-4, 2);
-    robot.sprint(12);
+    robot.sprint(-16);
+    robot.move_forward(-8, 2);
+    robot.move_forward(9);
     robot.Pause(delay);
     robot.turn(90, 1);
     robot.stop(); // debug checkpoint
     robot.Pause(delay);
-    robot.sprint(12);
-    robot.move_forward(4, 2); // align against bin front
+    robot.sprint(6);
+    robot.move_forward(10, 2); // align against bin front
     robot.Pause(delay);
     robot.turn(90, -1);
     robot.Pause(delay);
@@ -376,7 +372,7 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.Pause(delay);
     robot.turn(45, 1);
     robot.Pause(delay);
-    robot.move_forward(-1, 2);
+    robot.move_forward(-2.25, 2);
     robot.stop("Levers"); // debug checkpoint
     levers(robot);
     robot.Pause(delay);
@@ -386,9 +382,9 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.sprint(-10);
     robot.turn(45, -1);
     robot.move_forward(-14, 2); // align against right side
-    robot.move_forward(2, 2);
+    robot.move_forward(2.5, 2);
     robot.turn(90, -1);
-    robot.move_forward(-12, 2); // align against table front
+    robot.Pause(delay);
     robot.stop(); // debug checkpoint
     robot.sprint(32);
     robot.move_forward(8, 2);
@@ -398,7 +394,8 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.Pause(delay);
     robot.turn(135, -1);
     robot.Pause(delay);
-    robot.sprint(10); // hit button to end run
+    robot.sprint(8); // hit button to end run
+    robot.move_forward(2, 2);
     robot.stop("Course Done"); // debug checkpoint
     
     // victory dance
