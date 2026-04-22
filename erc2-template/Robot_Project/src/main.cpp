@@ -5,14 +5,18 @@
 #include <robot.h>
 #include <tasks.h>
 
-// AnalogInputPin test_light_sensor(FEHIO::Pin2);
+// AnalogInputPin test_light_sensor(FEHIO::Pin14);
 
+/*
+Main function to instantiate Robot class and complete tasks
+*/
 void ERCMain()
 {
     Robot robot;
 
     runCourse(robot);
 
+    // robot.stop();
     // int x, y;
     // float min = 5, max = 0;
     // float test;

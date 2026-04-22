@@ -5,24 +5,40 @@
 #include <FEHSD.h>
 #include <FEH.h>
 #include <utils.h>
+#include <radio.h>
 
-#define SPEED 35
-#define delay 100
+#define SPEED 40
+#define SPRINT 70
+#define delay 50
 
 class Robot {
     private:
         const bool debugMode = false;
-        const float left_opto_threshold = 3; // may need to change
-        const float right_opto_threshold = 2.5;
+        const uint8_t universalPause = 1;
         // servo min/max, light sensor thresholds, others
-        const float blue_threshold = 2;
-        const float red_threshold = 0.85;
-        const int8_t check_time = 50; // miliseconds, for collision checks
         int16_t baseAngle = 90, joint1Angle = 180, joint2Angle = 10;
         int16_t angles[3] = {baseAngle, joint1Angle, joint2Angle};
-        uint8_t rotateSpeed = 20, rotateIncrement = 50; // rotateSpeed: pause time between increments in milliseconds
+        const uint8_t rotateSpeed = 20, rotateIncrement = 50; // rotateSpeed: pause time between increments in milliseconds
+        float redThreshold = 0.55;
+
+        uint16_t clamp(float value, float min, float max);
+
+        // music
+        bool musicStarted = false;
+        long musicStartTime = 0;
+        const bool musicLoop = true;
+        int currentIndex = 0;
+        uint16_t currentFrameInIndex = 0;
+        int previousFrames = 0;
+        void musicPlayer();
+
+        void test1();
+        void test2();
+        void test3();
 
     public:
+        uint8_t currentCourse = 0; // default course A
+
         void initialize();
         bool move_forward(float inches, int8_t early = 0, bool backUp = false, int8_t speed = SPEED); // refer to detect
         bool turn(int16_t degrees, int8_t direction, int8_t early = 0); // positive: turn right, negative: turn left
@@ -33,6 +49,13 @@ class Robot {
         void rotate(int8_t jointIndex, int16_t angle, boolean slow = false, int8_t jointIndex2 = 4, int16_t angle2 = 0); // base = 0, joint1 = 1, joint2 = 2
         void defaultArm();
         int8_t lever();
+        void Pause(uint16_t milli);
 
-        void stop(); // for testing only
+        // overloaded function, because the implementation feels cleaner (pain to call though, probably won't be used much)
+        void rotate(int8_t joint[], int16_t angle[], int8_t size = 1, boolean slow = false);
+
+        void sprint(float inches, int8_t highSpeed = SPRINT, int8_t lowSpeed = SPEED);
+
+        void stop(const char* msg = "CheckPoint"); // for testing only
+        void debugTest(uint8_t test);
 };
