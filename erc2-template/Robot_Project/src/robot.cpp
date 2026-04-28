@@ -143,7 +143,7 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     I don't feel like measuring the exact angle the wheel is attached at, tracking it at any given time, and calculating the exact desired encoder count
     kind of just going to have to put up with a slight inaccuracy, or figure out a way to physically straighten the wheels despite the epoxy
     */
-    const float radius = 3.755; // inches
+    const float radius = 3.67; // inches
     const float pi = 3.141592653589793238462643383;
 
     float counts = radius * 40.5f * degrees * pi / 180.0f;
@@ -156,14 +156,14 @@ bool Robot::turn(int16_t degrees, int8_t direction, int8_t early) { // positive:
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts * adjustment) { // && !detect(early)) {
         Pause(universalPause);
 
-        // if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
-        //     float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
-        //     left_motor.SetPercent(clamp(direction * percent * (1 + correction), -100, 100));
-        //     right_motor.SetPercent(clamp(-direction * percent * (1 - correction), -100, 100));
-        // } else { // ensures it won't over correct and just wobble back and forth
-        //     right_motor.SetPercent(-direction * percent);
-        //     left_motor.SetPercent(direction * percent);
-        // }
+        if (fabs((left_encoder.Counts() - right_encoder.Counts())) / 40.5f > 0.065) {
+            float correction = (left_encoder.Counts() - right_encoder.Counts()) / 400.0f; // random value for now, needs tuning
+            left_motor.SetPercent(clamp(direction * percent * (1 + correction), -100, 100));
+            right_motor.SetPercent(clamp(-direction * percent * (1 - correction), -100, 100));
+        } else { // ensures it won't over correct and just wobble back and forth
+            right_motor.SetPercent(-direction * percent);
+            left_motor.SetPercent(direction * percent);
+        }
     }
     if (detect(early)) {
         stopped = true;
@@ -546,7 +546,7 @@ void Robot::test2() {
     int8_t direction = 1; // turn right
     uint16_t degrees = 1080; // high so any drift will be more obvious
 
-    const float radius = 3.6; // inches
+    const float radius = 3.675; // inches
     const float pi = 3.141592653589793238462643383;
 
     float counts = radius * 40.5f * degrees * pi / 180.0f;

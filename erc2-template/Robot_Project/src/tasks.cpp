@@ -171,7 +171,7 @@ void window(Robot &robot) {
     robot.rotate(1, 70, true, 2, -55); // positioning
     robot.move_forward(-0.3, 2);
     robot.rotate(0, 0, true, 2, -90);
-    robot.rotate(0, -36, true, 2, -65); // close window
+    robot.rotate(0, -40, true, 2, -59); // close window
     robot.Pause(delay);
     robot.rotate(0, 0, true);
     robot.move_forward(-4, 2);
@@ -226,9 +226,9 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     // compost
     robot.move_forward(1.2, 2);
     robot.Pause(delay);
-    robot.turn(90, -1);
+    robot.turn(92, -1);
     robot.Pause(delay);
-    robot.move_forward(-3.3, 2);
+    robot.move_forward(-3.4, 2);
     robot.stop("Compost"); // debug checkpoint
     compost(robot);
 
@@ -280,6 +280,7 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.Pause(delay);
     robot.hug(1); // align against right side
     robot.Pause(delay);
+    robot.turn(10, 1);
     robot.rotate(0, 0, false);
     robot.move_forward(12, 2);
     robot.move_forward(-1.5, 2);
@@ -344,7 +345,7 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.Pause(delay);
     robot.turn(30, -1);
     robot.Pause(delay);
-    bool foundLight = robot.move_forward(16, 1);
+    bool foundLight = robot.move_forward(19, 1);
     robot.stop("Buttons"); // debug checkpoint
     if (foundLight) { // in case the sensor misses the light and just hits both buttons, idk might remove
         buttons(robot);
@@ -360,19 +361,21 @@ void runCourse(Robot &robot) { // god function hahahaha bad practice can't stop 
     robot.move_forward(-8, 2);
     robot.move_forward(9);
     robot.Pause(delay);
-    robot.turn(90, 1);
+    robot.turn(88, 1);
     robot.stop(); // debug checkpoint
     robot.Pause(delay);
     robot.sprint(6);
     robot.move_forward(10, 2); // align against bin front
     robot.Pause(delay);
-    robot.turn(90, -1);
+    robot.turn(45, -1);
+    robot.Pause(delay);
+    robot.move_forward(-2.25, 2);
+    robot.Pause(delay);
+    robot.turn(45, -1);
     robot.Pause(delay);
     robot.move_forward(courseSpecificMovements[robot.currentCourse][2], 2);
     robot.Pause(delay);
     robot.turn(45, 1);
-    robot.Pause(delay);
-    robot.move_forward(-2.25, 2);
     robot.stop("Levers"); // debug checkpoint
     levers(robot);
     robot.Pause(delay);
